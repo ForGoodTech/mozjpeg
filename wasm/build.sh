@@ -22,8 +22,9 @@ mkdir -p "$BUILD_DIR"
 pushd "$BUILD_DIR" >/dev/null
 
 # Configure and build static libraries (only configure if not already)
+# Configure without PNG support to avoid libpng dependency in Emscripten
 if [ ! -f Makefile ]; then
-  emcmake cmake "$ROOT_DIR" -DENABLE_SHARED=OFF -DENABLE_STATIC=ON -DWITH_TURBOJPEG=ON
+  emcmake cmake "$ROOT_DIR" -DENABLE_SHARED=OFF -DENABLE_STATIC=ON -DWITH_TURBOJPEG=ON -DPNG_SUPPORTED=OFF
 fi
 emmake make -j"$(nproc)"
 
