@@ -8,6 +8,7 @@ const quality = document.getElementById('quality');
 const qval = document.getElementById('qval');
 const download = document.getElementById('download');
 const preview = document.getElementById('preview');
+const rate = document.getElementById('rate');
 
 quality.addEventListener('input', () => {
   qval.textContent = quality.value;
@@ -28,13 +29,14 @@ document.getElementById('compress').addEventListener('click', async () => {
   try {
     module.FS.writeFile(srcName, new Uint8Array(arrayBuffer));
 
-    const res = module.ccall(
+    const savedFraction = module.ccall(
       'wasm_compress',
       'number',
-      ['string', 'string', 'number', 'number'],
-      [srcName, dstName, parseInt(quality.value, 10), 0]
+      ['string', 'string', 'number'],
+      [srcName, dstName, parseInt(quality.value, 10)]
     );
-    if (!res) throw new Error('wasm_compress returned 0');
+    if (savedFraction < 0)
+      throw new Error('wasm_compress failed');
 
     const out = module.FS.readFile(dstName);
     const blob = new Blob([out], { type: 'image/jpeg' });
@@ -43,6 +45,9 @@ document.getElementById('compress').addEventListener('click', async () => {
     download.href = url;
     download.download = dstName;
     download.textContent = `Download JPEG (${Math.round(blob.size / 1024)} kB)`;
+    const ratePercent = savedFraction * 100;
+    rate.style.display = 'block';
+    rate.textContent = `Space saved: ${ratePercent.toFixed(1)}%`;
     preview.src = url;
   } catch (err) {
     console.error('Compression failed:', err);
