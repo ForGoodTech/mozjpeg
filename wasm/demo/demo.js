@@ -29,16 +29,14 @@ document.getElementById('compress').addEventListener('click', async () => {
   try {
     module.FS.writeFile(srcName, new Uint8Array(arrayBuffer));
 
-    const ratePtr = module._malloc(8);
-    const res = module.ccall(
+    const savedFraction = module.ccall(
       'wasm_compress',
       'number',
-      ['string', 'string', 'number', 'number'],
-      [srcName, dstName, parseInt(quality.value, 10), ratePtr]
+      ['string', 'string', 'number'],
+      [srcName, dstName, parseInt(quality.value, 10)]
     );
-    if (!res) throw new Error('wasm_compress returned 0');
-    const savedFraction = module.HEAPF64[ratePtr / 8];
-    module._free(ratePtr);
+    if (savedFraction < 0)
+      throw new Error('wasm_compress failed');
 
     const out = module.FS.readFile(dstName);
     const blob = new Blob([out], { type: 'image/jpeg' });

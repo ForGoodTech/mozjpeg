@@ -16,19 +16,18 @@ double wasm_get_progress(void) {
 
 /*
  * Recompress a JPEG file with a new quality setting.
- * Returns 1 on success and 0 on failure.  If rate is non-NULL then the
- * fraction of the original file size saved by compression is written to
- * *rate.
+ * Returns the fraction of the original file size saved by compression, or
+ * -1 on failure.
  */
-int wasm_compress(const char *infilename, const char *outfilename,
-                  int quality, double *rate) {
+double wasm_compress(const char *infilename, const char *outfilename,
+                     int quality) {
   tjhandle dhandle = NULL, chandle = NULL;
   unsigned char *inBuf = NULL, *rgbBuf = NULL, *jpegBuf = NULL;
   unsigned long jpegSize = 0;
   size_t inSize = 0;
   int width = 0, height = 0, subsamp = 0;
   FILE *infile = NULL, *outfile = NULL;
-  int retval = 0;
+  double rate = -1.0;
 
   infile = fopen(infilename, "rb");
   if (!infile)
@@ -73,14 +72,11 @@ int wasm_compress(const char *infilename, const char *outfilename,
     goto bailout;
   if (fwrite(jpegBuf, jpegSize, 1, outfile) != 1)
     goto bailout;
-  if (rate)
-    *rate = (jpegSize >= inSize) ? 0.0 :
-            (double)(inSize - jpegSize) / (double)inSize;
-
-  retval = 1; /* Success */
+  rate = (jpegSize >= inSize) ? 0.0 :
+         (double)(inSize - jpegSize) / (double)inSize;
 
 bailout:
-  if (!retval) {
+  if (rate < 0.0) {
     const char *err = chandle ? tjGetErrorStr2(chandle)
                               : (dhandle ? tjGetErrorStr2(dhandle)
                                          : tjGetErrorStr());
@@ -100,5 +96,5 @@ bailout:
     tjDestroy(dhandle);
   if (infile)
     fclose(infile);
-  return retval;
+  return rate;
 }

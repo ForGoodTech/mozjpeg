@@ -3,7 +3,8 @@
 This directory contains a minimal WebAssembly build of MozJPEG using
 [Emscripten](https://emscripten.org/). The build exposes two functions:
 
-- `wasm_compress()` – recompress a JPEG image at the specified quality
+- `wasm_compress()` – recompress a JPEG image at the specified quality and
+  return the fraction of the original file size saved (or -1 on failure)
 - `wasm_get_progress()` – placeholder progress callback
 
 ## Build
