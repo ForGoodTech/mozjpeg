@@ -32,6 +32,7 @@ emmake make -j"$(nproc)"
 emcc "$SCRIPT_DIR/mozjpeg_wasm.c" "$ROOT_DIR/tjutil.c" libturbojpeg.a libjpeg.a \
   -I"$ROOT_DIR" -O3 \
   -s EXPORTED_FUNCTIONS='["_wasm_compress","_wasm_get_progress"]' \
+  -s EXPORTED_RUNTIME_METHODS='["FS","ccall"]' \
   -s MODULARIZE=1 -s EXPORT_NAME="MozJPEG" \
   -o mozjpeg.js
 

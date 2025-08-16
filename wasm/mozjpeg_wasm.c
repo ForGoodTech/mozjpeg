@@ -4,8 +4,7 @@
 
 /*
  * Simple WebAssembly-friendly wrappers around the TurboJPEG API.
- * These functions expect that the input file contains an image format
- * supported by tjLoadImage() (for instance, PNG or BMP.)
+ * The demo currently supports JPEG input only.
  */
 
 /* Placeholder progress function.  Real applications can wire this into
@@ -16,52 +15,89 @@ double wasm_get_progress(void) {
 }
 
 /*
- * Compress an image file to JPEG.
+ * Recompress a JPEG file with a new quality setting.
  * Returns 1 on success and 0 on failure.  If rate is non-NULL then the
  * approximate bits-per-pixel of the compressed image is written to *rate.
  */
 int wasm_compress(const char *infilename, const char *outfilename,
                   int quality, double *rate) {
-  tjhandle handle = NULL;
-  unsigned char *srcBuf = NULL, *jpegBuf = NULL;
+  tjhandle dhandle = NULL, chandle = NULL;
+  unsigned char *inBuf = NULL, *rgbBuf = NULL, *jpegBuf = NULL;
   unsigned long jpegSize = 0;
-  int width = 0, height = 0, inSubsamp = 0, inColorspace = 0;
-  FILE *outfile = NULL;
+  size_t inSize = 0;
+  int width = 0, height = 0, subsamp = 0;
+  FILE *infile = NULL, *outfile = NULL;
   int retval = 0;
 
-  /* Load the input image into an RGB buffer. */
-  srcBuf = tjLoadImage(infilename, &width, 0, &height, &inColorspace, TJPF_RGB);
-  if (!srcBuf)
+  infile = fopen(infilename, "rb");
+  if (!infile)
     goto bailout;
-
-  handle = tjInitCompress();
-  if (!handle)
+  if (fseek(infile, 0, SEEK_END) < 0)
     goto bailout;
+  inSize = ftell(infile);
+  rewind(infile);
+  inBuf = (unsigned char *)tjAlloc(inSize);
+  if (!inBuf)
+    goto bailout;
+  if (fread(inBuf, 1, inSize, infile) != inSize)
+    goto bailout;
+  fclose(infile);
+  infile = NULL;
 
-  if (tjCompress2(handle, srcBuf, width, 0, height, TJPF_RGB, &jpegBuf,
+  dhandle = tjInitDecompress();
+  if (!dhandle)
+    goto bailout;
+  if (tjDecompressHeader2(dhandle, inBuf, inSize, &width, &height, &subsamp) < 0)
+    goto bailout;
+  rgbBuf = (unsigned char *)tjAlloc(width * height * tjPixelSize[TJPF_RGB]);
+  if (!rgbBuf)
+    goto bailout;
+  if (tjDecompress2(dhandle, inBuf, inSize, rgbBuf, width, 0, height,
+                    TJPF_RGB, 0) < 0)
+    goto bailout;
+  tjDestroy(dhandle);
+  dhandle = NULL;
+  tjFree(inBuf);
+  inBuf = NULL;
+
+  chandle = tjInitCompress();
+  if (!chandle)
+    goto bailout;
+  if (tjCompress2(chandle, rgbBuf, width, 0, height, TJPF_RGB, &jpegBuf,
                   &jpegSize, TJSAMP_420, quality, TJFLAG_ACCURATEDCT) < 0)
     goto bailout;
 
   outfile = fopen(outfilename, "wb");
   if (!outfile)
     goto bailout;
-
   if (fwrite(jpegBuf, jpegSize, 1, outfile) != 1)
     goto bailout;
-
   if (rate)
-    *rate = (double)jpegSize / (double)(width * height * tjPixelSize[TJPF_RGB]) * 8.0;
+    *rate = (double)jpegSize /
+            (double)(width * height * tjPixelSize[TJPF_RGB]) * 8.0;
 
-  retval = 1;  /* Success */
+  retval = 1; /* Success */
 
 bailout:
+  if (!retval) {
+    const char *err = chandle ? tjGetErrorStr2(chandle)
+                              : (dhandle ? tjGetErrorStr2(dhandle)
+                                         : tjGetErrorStr());
+    fprintf(stderr, "TurboJPEG error: %s\n", err);
+  }
   if (outfile)
     fclose(outfile);
   if (jpegBuf)
     tjFree(jpegBuf);
-  if (srcBuf)
-    tjFree(srcBuf);
-  if (handle)
-    tjDestroy(handle);
+  if (rgbBuf)
+    tjFree(rgbBuf);
+  if (inBuf)
+    tjFree(inBuf);
+  if (chandle)
+    tjDestroy(chandle);
+  if (dhandle)
+    tjDestroy(dhandle);
+  if (infile)
+    fclose(infile);
   return retval;
 }

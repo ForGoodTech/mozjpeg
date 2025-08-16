@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MozJPEG WASM Demo</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+    img { max-width: 100%; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>MozJPEG WASM Demo</h1>
+  <p>Select a JPEG image, choose a quality, and recompress it in your browser.</p>
+  <input type="file" id="input" accept="image/jpeg" />
+  <label>
+    Quality:
+    <input type="range" id="quality" min="1" max="100" value="75" />
+    <span id="qval">75</span>
+  </label>
+  <button id="compress">Compress</button>
+  <p><a id="download" style="display:none"></a></p>
+  <img id="preview" alt="Compressed preview" />
+
+  <script src="mozjpeg.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>
