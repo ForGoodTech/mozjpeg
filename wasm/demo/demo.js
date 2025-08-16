@@ -29,13 +29,16 @@ document.getElementById('compress').addEventListener('click', async () => {
   try {
     module.FS.writeFile(srcName, new Uint8Array(arrayBuffer));
 
+    const ratePtr = module._malloc(8);
     const res = module.ccall(
       'wasm_compress',
       'number',
       ['string', 'string', 'number', 'number'],
-      [srcName, dstName, parseInt(quality.value, 10), 0]
+      [srcName, dstName, parseInt(quality.value, 10), ratePtr]
     );
     if (!res) throw new Error('wasm_compress returned 0');
+    const savedFraction = module.HEAPF64[ratePtr / 8];
+    module._free(ratePtr);
 
     const out = module.FS.readFile(dstName);
     const blob = new Blob([out], { type: 'image/jpeg' });
@@ -44,9 +47,9 @@ document.getElementById('compress').addEventListener('click', async () => {
     download.href = url;
     download.download = dstName;
     download.textContent = `Download JPEG (${Math.round(blob.size / 1024)} kB)`;
-    const ratePercent = (blob.size / file.size) * 100;
+    const ratePercent = savedFraction * 100;
     rate.style.display = 'block';
-    rate.textContent = `Compression rate: ${ratePercent.toFixed(1)}%`;
+    rate.textContent = `Space saved: ${ratePercent.toFixed(1)}%`;
     preview.src = url;
   } catch (err) {
     console.error('Compression failed:', err);

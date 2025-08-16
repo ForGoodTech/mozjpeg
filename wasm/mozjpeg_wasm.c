@@ -17,7 +17,8 @@ double wasm_get_progress(void) {
 /*
  * Recompress a JPEG file with a new quality setting.
  * Returns 1 on success and 0 on failure.  If rate is non-NULL then the
- * approximate bits-per-pixel of the compressed image is written to *rate.
+ * fraction of the original file size saved by compression is written to
+ * *rate.
  */
 int wasm_compress(const char *infilename, const char *outfilename,
                   int quality, double *rate) {
@@ -73,8 +74,8 @@ int wasm_compress(const char *infilename, const char *outfilename,
   if (fwrite(jpegBuf, jpegSize, 1, outfile) != 1)
     goto bailout;
   if (rate)
-    *rate = (double)jpegSize /
-            (double)(width * height * tjPixelSize[TJPF_RGB]) * 8.0;
+    *rate = (jpegSize >= inSize) ? 0.0 :
+            (double)(inSize - jpegSize) / (double)inSize;
 
   retval = 1; /* Success */
 
