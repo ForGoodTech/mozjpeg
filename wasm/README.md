@@ -3,7 +3,7 @@
 This directory contains a minimal WebAssembly build of MozJPEG using
 [Emscripten](https://emscripten.org/). The build exposes two functions:
 
-- `wasm_compress()` – compress a source image to JPEG
+- `wasm_compress()` – recompress a JPEG image at the specified quality
 - `wasm_get_progress()` – placeholder progress callback
 
 ## Build
@@ -22,7 +22,7 @@ This directory contains a minimal WebAssembly build of MozJPEG using
 ## Browser Demo
 
 The `demo/` subdirectory contains a very simple browser demo that calls
-`wasm_compress()` from JavaScript.
+`wasm_compress()` from JavaScript. It currently accepts JPEG input only.
 
 To deploy the demo on a static web server:
 
@@ -31,7 +31,7 @@ To deploy the demo on a static web server:
    - `wasm/build/mozjpeg.wasm`
    - `wasm/demo/index.html`
    - `wasm/demo/demo.js`
-2. Open `index.html` in a browser and select an input image (PNG, BMP, etc.).
+2. Open `index.html` in a browser and select a JPEG image to recompress.
 3. Choose a JPEG quality and click **Compress** to download the resulting
    JPEG and view a preview.
 
