@@ -37,3 +37,14 @@ To deploy the demo on a static web server:
 
 The demo uses a flat file layout so it can be served by any simple static
 file server.
+
+### Troubleshooting
+
+If the demo reports TurboJPEG errors such as `tj3LoadImage8(): Invalid argument`,
+ensure that files are written and read via the Emscripten virtual filesystem:
+
+- Use `module.FS.writeFile` and `module.FS.readFile` in JavaScript.
+- Call `wasm_compress` through `module.ccall` so file names are passed as strings.
+
+Using outdated helpers like `FS_writeFile` leaves the input file unwritten and
+causes TurboJPEG to receive invalid data.

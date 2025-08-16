@@ -26,23 +26,17 @@ document.getElementById('compress').addEventListener('click', async () => {
   const srcName = file.name;
   const dstName = 'out.jpg';
   try {
-    console.log('Writing input file', srcName, arrayBuffer.byteLength, 'bytes');
     module.FS.writeFile(srcName, new Uint8Array(arrayBuffer));
-    console.log('Input file written');
 
-    console.log('Calling wasm_compress');
     const res = module.ccall(
       'wasm_compress',
       'number',
       ['string', 'string', 'number', 'number'],
       [srcName, dstName, parseInt(quality.value, 10), 0]
     );
-    console.log('wasm_compress returned', res);
     if (!res) throw new Error('wasm_compress returned 0');
 
-    console.log('Reading output file');
     const out = module.FS.readFile(dstName);
-    console.log('Output file size', out.length, 'bytes');
     const blob = new Blob([out], { type: 'image/jpeg' });
     const url = URL.createObjectURL(blob);
     download.style.display = 'inline';
