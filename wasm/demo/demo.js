@@ -25,25 +25,27 @@ document.getElementById('compress').addEventListener('click', async () => {
 
   const srcName = file.name;
   const dstName = 'out.jpg';
-  module.FS.writeFile(srcName, new Uint8Array(arrayBuffer));
+  try {
+    module.FS.writeFile(srcName, new Uint8Array(arrayBuffer));
 
-  const res = module._wasm_compress(
-    srcName,
-    dstName,
-    parseInt(quality.value, 10),
-    0
-  );
-  if (!res) {
-    alert('Compression failed.');
-    return;
+    const res = module._wasm_compress(
+      srcName,
+      dstName,
+      parseInt(quality.value, 10),
+      0
+    );
+    if (!res) throw new Error('wasm_compress returned 0');
+
+    const out = module.FS.readFile(dstName);
+    const blob = new Blob([out], { type: 'image/jpeg' });
+    const url = URL.createObjectURL(blob);
+    download.style.display = 'inline';
+    download.href = url;
+    download.download = dstName;
+    download.textContent = `Download JPEG (${Math.round(blob.size / 1024)} kB)`;
+    preview.src = url;
+  } catch (err) {
+    console.error('Compression failed:', err);
+    alert('Compression failed. See console for details.');
   }
-
-  const out = module.FS.readFile(dstName);
-  const blob = new Blob([out], { type: 'image/jpeg' });
-  const url = URL.createObjectURL(blob);
-  download.style.display = 'inline';
-  download.href = url;
-  download.download = dstName;
-  download.textContent = `Download JPEG (${Math.round(blob.size / 1024)} kB)`;
-  preview.src = url;
 });

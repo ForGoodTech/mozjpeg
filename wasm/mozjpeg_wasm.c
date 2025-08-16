@@ -43,11 +43,15 @@ int wasm_compress(const char *infilename, const char *outfilename,
     goto bailout;
 
   outfile = fopen(outfilename, "wb");
-  if (!outfile)
+  if (!outfile) {
+    perror(outfilename);
     goto bailout;
+  }
 
-  if (fwrite(jpegBuf, jpegSize, 1, outfile) != 1)
+  if (fwrite(jpegBuf, jpegSize, 1, outfile) != 1) {
+    perror(outfilename);
     goto bailout;
+  }
 
   if (rate)
     *rate = (double)jpegSize / (double)(width * height * tjPixelSize[TJPF_RGB]) * 8.0;
@@ -55,6 +59,10 @@ int wasm_compress(const char *infilename, const char *outfilename,
   retval = 1;  /* Success */
 
 bailout:
+  if (!retval) {
+    const char *err = handle ? tjGetErrorStr2(handle) : tjGetErrorStr();
+    fprintf(stderr, "TurboJPEG error: %s\n", err);
+  }
   if (outfile)
     fclose(outfile);
   if (jpegBuf)
