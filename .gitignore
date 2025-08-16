@@ -46,3 +46,8 @@ Makefile
 test_yuv*.jpg
 CMakeCache.txt
 CTestTestfile.cmake
+# WebAssembly build artifacts
+wasm/build/
+wasm/*.js
+wasm/*.wasm
+
