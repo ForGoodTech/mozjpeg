@@ -28,11 +28,11 @@ document.getElementById('compress').addEventListener('click', async () => {
   try {
     module.FS.writeFile(srcName, new Uint8Array(arrayBuffer));
 
-    const res = module._wasm_compress(
-      srcName,
-      dstName,
-      parseInt(quality.value, 10),
-      0
+    const res = module.ccall(
+      'wasm_compress',
+      'number',
+      ['string', 'string', 'number', 'number'],
+      [srcName, dstName, parseInt(quality.value, 10), 0]
     );
     if (!res) throw new Error('wasm_compress returned 0');
 
