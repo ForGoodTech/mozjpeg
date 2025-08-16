@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage: checkout-branch <branch-name>
+if [ $# -eq 0 ]; then
+    echo "Please provide a branch name."
+    echo "Example: checkout-branch codex/update-button-styles-and-layout"
+    exit 1
+fi
+
+BRANCH="$1"
+
+# Ensure we're inside a Git repo
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "This directory is not a Git repository."
+    exit 1
+fi
+
+# Determine current branch (may be HEAD in detached state)
+CURRENT="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")"
+
+# Check that the remote branch exists on origin (avoid typos)
+if ! git ls-remote --heads origin "$BRANCH" | grep -q .; then
+    echo "Remote branch \"origin/$BRANCH\" was not found."
+    echo "Tip: list matching remote branches with:"
+    echo "  git branch -r | grep -i \"$BRANCH\""
+    exit 1
+fi
+
+# Does a local branch of the same name already exist?
+if ! git show-ref --verify --quiet "refs/heads/$BRANCH"; then
+    echo "Creating local branch \"$BRANCH\" tracking origin/$BRANCH..."
+    if ! git fetch origin "$BRANCH" >/dev/null 2>&1; then
+        echo "Failed to fetch origin/$BRANCH."
+        exit 1
+    fi
+    if ! git switch -c "$BRANCH" --track "origin/$BRANCH"; then
+        echo "Failed to create/switch to branch $BRANCH."
+        exit 1
+    fi
+    echo "Switched to new tracking branch \"$BRANCH\"."
+    exit 0
+fi
+
+# Local branch exists already
+if [[ "$CURRENT" == "$BRANCH" ]]; then
+    echo "Already on \"$BRANCH\". Fast-forwarding from origin/$BRANCH..."
+    if ! git fetch origin "$BRANCH" >/dev/null 2>&1; then
+        echo "Failed to fetch origin/$BRANCH."
+        exit 1
+    fi
+    if ! git merge --ff-only "origin/$BRANCH"; then
+        echo "Fast-forward merge failed. You may have local commits or conflicts."
+        echo "Consider: git pull --rebase origin $BRANCH"
+        exit 1
+    fi
+    echo "Updated \"$BRANCH\" to the latest origin/$BRANCH."
+    exit 0
+else
+    echo "Fetching origin/$BRANCH and switching..."
+    if ! git fetch origin "$BRANCH" >/dev/null 2>&1; then
+        echo "Failed to fetch origin/$BRANCH."
+        exit 1
+    fi
+    if ! git switch "$BRANCH"; then
+        echo "Failed to switch to branch $BRANCH."
+        exit 1
+    fi
+    # Ensure the local branch tracks origin/$BRANCH (in case it wasn't set)
+    if ! git rev-parse --abbrev-ref --symbolic-full-name "@{u}" >/dev/null 2>&1; then
+        git branch --set-upstream-to="origin/$BRANCH" "$BRANCH" >/dev/null 2>&1 || true
+    fi
+    echo "Switched to \"$BRANCH\" and tracking origin/$BRANCH."
+    exit 0
+fi
+
