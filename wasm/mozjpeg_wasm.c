@@ -25,12 +25,12 @@ int wasm_compress(const char *infilename, const char *outfilename,
   tjhandle handle = NULL;
   unsigned char *srcBuf = NULL, *jpegBuf = NULL;
   unsigned long jpegSize = 0;
-  int width = 0, height = 0, inSubsamp = 0, inColorspace = 0;
+  int width = 0, height = 0, pixelFormat = TJPF_RGB;
   FILE *outfile = NULL;
   int retval = 0;
 
   /* Load the input image into an RGB buffer. */
-  srcBuf = tjLoadImage(infilename, &width, 0, &height, &inColorspace, TJPF_RGB);
+  srcBuf = tjLoadImage(infilename, &width, 1, &height, &pixelFormat, 0);
   if (!srcBuf)
     goto bailout;
 
