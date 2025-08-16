@@ -29,19 +29,30 @@ int wasm_compress(const char *infilename, const char *outfilename,
   FILE *outfile = NULL;
   int retval = 0;
 
-  /* Load the input image into an RGB buffer. */
+  fprintf(stderr, "wasm_compress: '%s' -> '%s' quality=%d\n", infilename,
+          outfilename, quality);
+  fflush(stderr);
+
+  fprintf(stderr, "Loading input file...\n");
   srcBuf = tjLoadImage(infilename, &width, 1, &height, &pixelFormat, 0);
   if (!srcBuf)
     goto bailout;
+  fprintf(stderr, "Loaded image %dx%d\n", width, height);
+  fflush(stderr);
 
+  fprintf(stderr, "Initializing compressor...\n");
   handle = tjInitCompress();
   if (!handle)
     goto bailout;
 
+  fprintf(stderr, "Compressing...\n");
   if (tjCompress2(handle, srcBuf, width, 0, height, TJPF_RGB, &jpegBuf,
                   &jpegSize, TJSAMP_420, quality, TJFLAG_ACCURATEDCT) < 0)
     goto bailout;
+  fprintf(stderr, "Compression produced %lu bytes\n", jpegSize);
+  fflush(stderr);
 
+  fprintf(stderr, "Writing output file...\n");
   outfile = fopen(outfilename, "wb");
   if (!outfile) {
     perror(outfilename);
@@ -54,9 +65,10 @@ int wasm_compress(const char *infilename, const char *outfilename,
   }
 
   if (rate)
-    *rate = (double)jpegSize / (double)(width * height * tjPixelSize[TJPF_RGB]) * 8.0;
+    *rate = (double)jpegSize /
+            (double)(width * height * tjPixelSize[TJPF_RGB]) * 8.0;
 
-  retval = 1;  /* Success */
+  retval = 1; /* Success */
 
 bailout:
   if (!retval) {
