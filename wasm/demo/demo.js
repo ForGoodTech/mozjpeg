@@ -25,15 +25,20 @@ document.getElementById('compress').addEventListener('click', async () => {
 
   const srcName = file.name;
   const dstName = 'out.jpg';
-  module.FS_writeFile(srcName, new Uint8Array(arrayBuffer));
+  module.FS.writeFile(srcName, new Uint8Array(arrayBuffer));
 
-  const res = module._wasm_compress(srcName, dstName, parseInt(quality.value, 10), 0);
+  const res = module._wasm_compress(
+    srcName,
+    dstName,
+    parseInt(quality.value, 10),
+    0
+  );
   if (!res) {
     alert('Compression failed.');
     return;
   }
 
-  const out = module.FS_readFile(dstName);
+  const out = module.FS.readFile(dstName);
   const blob = new Blob([out], { type: 'image/jpeg' });
   const url = URL.createObjectURL(blob);
   download.style.display = 'inline';
