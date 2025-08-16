@@ -8,6 +8,7 @@ const quality = document.getElementById('quality');
 const qval = document.getElementById('qval');
 const download = document.getElementById('download');
 const preview = document.getElementById('preview');
+const rate = document.getElementById('rate');
 
 quality.addEventListener('input', () => {
   qval.textContent = quality.value;
@@ -43,6 +44,9 @@ document.getElementById('compress').addEventListener('click', async () => {
     download.href = url;
     download.download = dstName;
     download.textContent = `Download JPEG (${Math.round(blob.size / 1024)} kB)`;
+    const ratePercent = (blob.size / file.size) * 100;
+    rate.style.display = 'block';
+    rate.textContent = `Compression rate: ${ratePercent.toFixed(1)}%`;
     preview.src = url;
   } catch (err) {
     console.error('Compression failed:', err);
