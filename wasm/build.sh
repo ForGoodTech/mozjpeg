@@ -29,7 +29,7 @@ fi
 emmake make -j"$(nproc)"
 
 # Compile the WebAssembly module with the wrapper
-emcc "$SCRIPT_DIR/mozjpeg_wasm.c" "$ROOT_DIR/tjutil.c" libjpeg.a turbojpeg.a \
+emcc "$SCRIPT_DIR/mozjpeg_wasm.c" "$ROOT_DIR/tjutil.c" libturbojpeg.a libjpeg.a \
   -I"$ROOT_DIR" -O3 \
   -s EXPORTED_FUNCTIONS='["_wasm_compress","_wasm_get_progress"]' \
   -s MODULARIZE=1 -s EXPORT_NAME="MozJPEG" \
