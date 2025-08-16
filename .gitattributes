@@ -4,3 +4,5 @@
 *.ppm binary
 /ChangeLog.md conflict-marker-size=8
 *.sh text eol=lf
+
+checkout-branch text eol=lf
