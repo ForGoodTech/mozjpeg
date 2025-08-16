@@ -25,7 +25,7 @@ int wasm_compress(const char *infilename, const char *outfilename,
   unsigned char *inBuf = NULL, *rgbBuf = NULL, *jpegBuf = NULL;
   unsigned long jpegSize = 0;
   size_t inSize = 0;
-  int width = 0, height = 0;
+  int width = 0, height = 0, subsamp = 0;
   FILE *infile = NULL, *outfile = NULL;
   int retval = 0;
 
@@ -85,7 +85,7 @@ int wasm_compress(const char *infilename, const char *outfilename,
     goto bailout;
   }
   TRACE_LINE();
-  if (tjDecompressHeader2(dhandle, inBuf, inSize, &width, &height, NULL) < 0) {
+  if (tjDecompressHeader2(dhandle, inBuf, inSize, &width, &height, &subsamp) < 0) {
     TRACE_LINE();
     goto bailout;
   }
